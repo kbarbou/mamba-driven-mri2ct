@@ -1,9 +1,3 @@
-"""
-Reads the per-anatomy CT NIfTI path lists produced by convert_mha_to_nifti.py,
-performs a per-region 90/10 train/test split, copies MR and CT pairs into the
-nnU-Net raw data directory structure, and writes a patient_mapping.json.
-"""
-
 import os
 import json
 import shutil
