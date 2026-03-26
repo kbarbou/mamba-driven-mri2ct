@@ -2,31 +2,14 @@
 
 The goal of this work is to investigate MRI-to-CT image-to-image translation using multiple deep learning models, with a focus on Mamba-based architectures.
 
-We provide a unified framework for training and evaluating:
+We provide a unified framework for training and evaluating several models that have been adapted for MRI-to-CT translation, including:
 
 - U-Mamba
 - SegMamba
-- nnU-Net (adapted for translation)
+- nnU-Net
 - U-Net
 - SwinUNETR
 
-### Environments
-
-This repository uses **multiple environments** due to different dependencies across models:
-
-- `requirements.txt`  
-  → Used for preprocessing and evaluation
-
-- `nnUNet_translation/`  
-  → Requires a dedicated Python environment (see folder README.md)
-
-- `U-Mamba_translation/`  
-  → Uses Docker (see folder README.md)
-
-- `SegMamba_translation/`  
-  → Uses Docker (see folder README.md)
-
----
 
 ## Data Preparation
 
@@ -49,7 +32,7 @@ python data_preparation.py
 python convert_mha_to_nifti.py
 ```
 
-### Acknowledgements
+## Acknowledgements
 This work builds upon several open-source projects. We express our appreciation to the authors of the following repositories:
 
 - SegMamba — https://github.com/ge-xing/SegMamba
