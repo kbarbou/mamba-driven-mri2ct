@@ -37,11 +37,17 @@ The data used in this study are derived from the training set of **Task 1** of t
 First, create the required conda environment and install additional dependencies:
 
 ```bash
-conda env create -f mri2ct.yaml
+conda env create -f mri2ct.yml
 conda activate mri2ct
-pip install -r requirements.txt
+pip install -r requirements.txt --no-cache-dir
 ```
-After setting up the environment, run the following scripts:
+
+After setting up the environment, run the following commands:
+```bash
+cd mamba-driven-mri2ct/
+python data_preparation.py
+python convert_mha_to_nifti.py
+```
 
 ### Acknowledgements
 This work builds upon several open-source projects. We express our appreciation to the authors of the following repositories:
