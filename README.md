@@ -32,6 +32,48 @@ python data_preparation.py
 python convert_mha_to_nifti.py
 ```
 
+### SegMamba
+```bash
+cd SegMamba_translation/
+
+```
+
+### U-Mamba
+```bash
+cd U-Mamba_translation/
+
+```
+
+### nnUNet
+```bash
+cd nnUNet_translation/
+conda 
+pip install -e .
+export nnUNet_raw="set/path/to/data/nnUNet/raw"
+export nnUNet_preprocessed="set/path/to/data/nnUNet/preprocessed"
+export nnUNet_results="set/path/to/data/nnUNet/results"
+```
+
+#### Preprocessing
+```bash
+nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres -pl nnUNetPlannerResUNet
+```
+#### Training
+```bash
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres 0 -tr nnUNetTrainerMRCT_compound_loss -pl nnResUNetPlans [optional: -pretrained_weights PATH_TO_CHECKPOINT]
+```
+#### Infenrence
+```bash
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -p nnResUNetPlans -tr nnUNetTrainerMRCT_compound_loss -f FOLD [optional : -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)]
+```
+
+### Evaluation
+Once training and inference are completed, set up the paths for ground truth and synthetic data and run the following scripts:
+```bash
+python compute_image_similarity_metrics.py
+python compute_segmentation_metrics.py
+```
+
 ## Acknowledgements
 This work builds upon several open-source projects. We express our appreciation to the authors of the following repositories:
 
