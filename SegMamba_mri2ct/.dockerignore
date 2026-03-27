@@ -1,0 +1,16 @@
+# Ignore everything
+*
+
+!*.py
+
+!causal-conv1d/
+!light_training/
+!mamba/
+!model_segmamba/
+!monai/
+
+!causal-conv1d/**
+!light_training/**
+!mamba/**
+!model_segmamba/**
+!monai/**
