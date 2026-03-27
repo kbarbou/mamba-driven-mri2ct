@@ -33,15 +33,34 @@ python convert_mha_to_nifti.py
 ```
 
 ### SegMamba
+
+#### Docker Setup
+We recommend running training and inference for the SegMamba framework inside dedicated Docker container.
 ```bash
 cd SegMamba_translation/
-
+docker build -t segmamba:11.8.0-base-ubuntu22.04 .
 ```
+
+Verify the docker installation
+```bash
+docker run --rm --gpus '"device=0"' segmamba:11.8.0-base-ubuntu22.04 python 0_dummy_inference.py
+```
+#### Preprocessing
+The following preprocessing steps can be executed in the mri2ct environment:
+```bash
+python 1_prepare_raw_data.py --paths_dir /path/to/Paths_and_Sizes --out_base /path/to/out_base
+python 2_preprocessing.py --base_dir   /path/to/raw_data --output_dir /path/to/preprocessed/data
+```
+#### Training
+
+
+#### Infenrence
+
 
 ### U-Mamba
 ```bash
 cd U-Mamba_translation/
-
+docker build -t umamba:11.8.0-base-ubuntu22.04 .
 ```
 
 ### nnUNet
