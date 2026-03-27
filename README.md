@@ -47,15 +47,21 @@ docker run --rm --gpus '"device=0"' segmamba:11.8.0-base-ubuntu22.04 python 0_du
 ```
 #### Preprocessing
 The following preprocessing steps can be executed in the mri2ct environment:
-```bash
+```
 python 1_prepare_raw_data.py --paths_dir /path/to/Paths_and_Sizes --out_base /path/to/out_base
 python 2_preprocessing.py --base_dir   /path/to/raw_data --output_dir /path/to/preprocessed/data
 ```
-#### Training
 
+Specify model type and run the following command:
+#### Training
+```bash
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace segmamba:11.8.0-base-ubuntu22.04 python /workspace/3_train.py --model_type segmamba --data_dir /workspace/raw_data/fullres/train --model_save_path /workspace/logs/segmamba
+```
 
 #### Infenrence
-
+```bash
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /data/kbarbounakis/SegMamba_2:/workspace umamba:11.8.0-base-ubuntu22.04 python /workspace/4_predict.py --model_type segmamba --model_path /workspace/logs/segmamba/checkpoint_ep499.pt --input_dir /workspace/raw_data/fullres/test --output_dir /workspace/results/synthRAD2025
+```
 
 ### U-Mamba
 ```bash
