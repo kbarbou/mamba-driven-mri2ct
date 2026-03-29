@@ -109,7 +109,7 @@ export nnUNet_results="set/path/to/data/nnUNet/results"
 
 #### Preprocessing
 ```bash
-nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres -pl nnUNetPlannerResUNet
+nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres
 ```
 #### Training
 ```bash
