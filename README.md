@@ -35,7 +35,7 @@ python convert_mha_to_nifti.py
 ### SegMamba
 
 #### Docker Setup
-We recommend running training and inference for the SegMamba framework inside dedicated Docker container.
+We recommend running training and inference for the SegMamba framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine. 
 ```bash
 cd SegMamba_mri2ct/
 docker build -t segmamba:11.8.0-base-ubuntu22.04 .
@@ -60,14 +60,34 @@ docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2
 
 #### Infenrence
 ```bash
-docker run --rm --gpus '"device=0"' --shm-size=64g -v /data/kbarbounakis/SegMamba_2:/workspace umamba:11.8.0-base-ubuntu22.04 python /workspace/4_predict.py --model_type segmamba --model_path /workspace/logs/segmamba/checkpoint_ep499.pt --input_dir /workspace/raw_data/fullres/test --output_dir /workspace/results/synthRAD2025
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace segmamba:11.8.0-base-ubuntu22.04 python /workspace/4_predict.py --model_type segmamba --model_path /workspace/logs/segmamba/checkpoint_ep499.pt --input_dir /workspace/raw_data/fullres/test --output_dir /workspace/results/synthRAD2025
 ```
 
 ### U-Mamba
+We recommend running training and inference for the U-Mamba framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine.
 ```bash
 cd U-Mamba_mri2ct/
 docker build -t umamba:11.8.0-base-ubuntu22.04 .
 ```
+
+Verify the docker installation
+```bash
+docker run --rm --gpus '"device=0"' umamba:11.8.0-base-ubuntu22.04 python test_umamba.py
+```
+
+#### Preprocessing
+```bash
+docker run --rm --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres'
+```
+#### Training
+```bash
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_train 100 3d_fullres FOLD -tr nnUNetTrainerUMambaEncNoAMP'
+```
+#### Infenrence
+```bash
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_predict -d 100 -i /workspace/U-Mamba/data/nnUNet_raw/[DATASET_NAME]/imagesTs -o /workspace/U-Mamba/[OUTPUT_DIR_NAME] -c 3d_fullres -tr nnUNetTrainerUMambaEncNoAMP -f FOLD -chk checkpoint_latest.pth'
+```
+
 
 ### nnUNet
 ```bash
@@ -85,7 +105,7 @@ nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres -pl nnUNetPlannerResUNet
 ```
 #### Training
 ```bash
-CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres 0 -tr nnUNetTrainerMRCT_compound_loss -pl nnResUNetPlans [optional: -pretrained_weights PATH_TO_CHECKPOINT]
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss -pl nnResUNetPlans [optional: -pretrained_weights PATH_TO_CHECKPOINT]
 ```
 #### Infenrence
 ```bash
