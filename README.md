@@ -36,7 +36,7 @@ For both nnUNet_mri2ct and U-Mamba_mri2ct, the raw data can be prepared using th
 python prepare_nnunet_raw_data.py
 ```
 
-### SegMamba
+## SegMamba
 
 #### Docker Setup
 We recommend running training and inference for the SegMamba framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine. 
@@ -68,7 +68,7 @@ docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2
 docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace segmamba:11.8.0-base-ubuntu22.04 python /workspace/4_predict.py --model_type segmamba --model_path /workspace/logs/segmamba/checkpoint_ep499.pt --input_dir /workspace/raw_data/fullres/test --output_dir /workspace/results/synthRAD2025
 ```
 
-### U-Mamba
+## U-Mamba
 We recommend running training and inference for the U-Mamba framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine.
 ```bash
 cd U-Mamba_mri2ct/
@@ -93,8 +93,7 @@ docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2
 docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_predict -d 100 -i /workspace/U-Mamba/data/nnUNet_raw/[DATASET_NAME]/imagesTs -o /workspace/U-Mamba/[OUTPUT_DIR_NAME] -c 3d_fullres -tr nnUNetTrainerUMambaEncNoAMP -f FOLD -chk checkpoint_latest.pth'
 ```
 
-
-### nnUNet
+## nnUNet
 ```bash
 conda create --name nnUNet_mri2ct --clone mri2ct 
 conda activate nnUNet_mri2ct
