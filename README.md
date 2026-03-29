@@ -31,6 +31,10 @@ cd mamba-driven-mri2ct/
 python data_preparation.py
 python convert_mha_to_nifti.py
 ```
+For both nnUNet_mri2ct and U-Mamba_mri2ct, the raw data can be prepared using the same script. Please, ensure that input data paths are correctly configured inside the script and run:
+```bash
+python prepare_nnunet_raw_data.py
+```
 
 ### SegMamba
 
@@ -45,6 +49,7 @@ Verify the docker installation
 ```bash
 docker run --rm --gpus '"device=0"' segmamba:11.8.0-base-ubuntu22.04 python 0_dummy_inference.py
 ```
+
 #### Preprocessing
 The following preprocessing steps can be executed in the mri2ct environment:
 ```
@@ -91,9 +96,12 @@ docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2
 
 ### nnUNet
 ```bash
+conda create --name nnUNet_mri2ct --clone mri2ct 
+conda activate nnUNet_mri2ct
 cd nnUNet_mri2ct/
-conda 
 pip install -e .
+cd ./nnunetv2/training/loss
+ln -s /data/kbarbounakis/SegMamba_2/checkpoint_final.pth checkpoint_final.pth
 export nnUNet_raw="set/path/to/data/nnUNet/raw"
 export nnUNet_preprocessed="set/path/to/data/nnUNet/preprocessed"
 export nnUNet_results="set/path/to/data/nnUNet/results"
