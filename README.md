@@ -113,11 +113,11 @@ nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres
 ```
 #### Training
 ```bash
-CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss -pl nnResUNetPlans [optional: -pretrained_weights PATH_TO_CHECKPOINT]
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss [optional: -pretrained_weights PATH_TO_CHECKPOINT]
 ```
 #### Inference
 ```bash
-CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -p nnResUNetPlans -tr nnUNetTrainerMRCT_compound_loss -f FOLD [optional : -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)]
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -tr nnUNetTrainerMRCT_compound_loss -f FOLD [optional : -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)]
 ```
 
 ### Evaluation
