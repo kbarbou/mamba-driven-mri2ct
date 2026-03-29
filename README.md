@@ -54,16 +54,16 @@ docker run --rm --gpus '"device=0"' segmamba:11.8.0-base-ubuntu22.04 python 0_du
 The following preprocessing steps can be executed in the mri2ct environment:
 ```
 python 1_prepare_raw_data.py --paths_dir /path/to/Paths_and_Sizes --out_base /path/to/out_base
-python 2_preprocessing.py --base_dir   /path/to/raw_data --output_dir /path/to/preprocessed/data
+python 2_preprocessing.py --base_dir /path/to/raw_data --output_dir /path/to/preprocessed/data
 ```
 
 Specify model type and run the following command:
 #### Training
 ```bash
-docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace segmamba:11.8.0-base-ubuntu22.04 python /workspace/3_train.py --model_type segmamba --data_dir /workspace/raw_data/fullres/train --model_save_path /workspace/logs/segmamba
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace /path/to/mamba-driven-mri2ct/TotalSegmentator_Dataset297_Pretrained/checkpoint_final.pth:/workspace/checkpoint_final.pth segmamba:11.8.0-base-ubuntu22.04 python /workspace/3_train.py --model_type segmamba --data_dir /workspace/raw_data/fullres/train --model_save_path /workspace/logs/segmamba
 ```
 
-#### Infenrence
+#### Inference
 ```bash
 docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace segmamba:11.8.0-base-ubuntu22.04 python /workspace/4_predict.py --model_type segmamba --model_path /workspace/logs/segmamba/checkpoint_ep499.pt --input_dir /workspace/raw_data/fullres/test --output_dir /workspace/results/synthRAD2025
 ```
@@ -86,9 +86,9 @@ docker run --rm --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/w
 ```
 #### Training
 ```bash
-docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_train 100 3d_fullres FOLD -tr nnUNetTrainerUMambaEncNoAMP'
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba -v /path/to/mamba-driven-mri2ct/TotalSegmentator_Dataset297_Pretrained/checkpoint_final.pth:/workspace/U-Mamba/umamba/nnunetv2/training/loss/checkpoint_final.pth umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_train 100 3d_fullres FOLD -tr nnUNetTrainerUMambaEncNoAMP'
 ```
-#### Infenrence
+#### Inference
 ```bash
 docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_predict -d 100 -i /workspace/U-Mamba/data/nnUNet_raw/[DATASET_NAME]/imagesTs -o /workspace/U-Mamba/[OUTPUT_DIR_NAME] -c 3d_fullres -tr nnUNetTrainerUMambaEncNoAMP -f FOLD -chk checkpoint_latest.pth'
 ```
@@ -115,7 +115,7 @@ nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres -pl nnUNetPlannerResUNet
 ```bash
 CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss -pl nnResUNetPlans [optional: -pretrained_weights PATH_TO_CHECKPOINT]
 ```
-#### Infenrence
+#### Inference
 ```bash
 CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -p nnResUNetPlans -tr nnUNetTrainerMRCT_compound_loss -f FOLD [optional : -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)]
 ```
