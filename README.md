@@ -31,7 +31,7 @@ cd mamba-driven-mri2ct/
 python data_preparation.py
 python convert_mha_to_nifti.py
 ```
-For both nnUNet_mri2ct and U-Mamba_mri2ct, the raw data can be prepared using the same script. Please, ensure that input data paths are correctly configured inside the script and run:
+For both `nnUNet_mri2ct` and `U-Mamba_mri2ct`, the *raw data* can be prepared using the same script. Please, ensure that **input data paths** are correctly configured inside the script and run:
 ```bash
 python prepare_nnunet_raw_data.py
 ```
@@ -39,7 +39,7 @@ python prepare_nnunet_raw_data.py
 ## SegMamba
 
 #### Docker Setup
-We recommend running training and inference for the SegMamba framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine. 
+We recommend running training and inference for the `SegMamba_mri2ct` framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine. 
 ```bash
 cd SegMamba_mri2ct/
 docker build -t segmamba:11.8.0-base-ubuntu22.04 .
@@ -69,7 +69,7 @@ docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2
 ```
 
 ## U-Mamba
-We recommend running training and inference for the U-Mamba framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine.
+We recommend running training and inference for the `U-Mamba_mri2ct` framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine.
 ```bash
 cd U-Mamba_mri2ct/
 docker build -t umamba:11.8.0-base-ubuntu22.04 .
@@ -112,11 +112,11 @@ nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres
 ```
 #### Training
 ```bash
-CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss [optional: -pretrained_weights PATH_TO_CHECKPOINT]
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss \[optional: -pretrained_weights PATH_TO_CHECKPOINT\]
 ```
 #### Inference
 ```bash
-CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -tr nnUNetTrainerMRCT_compound_loss -f FOLD [optional : -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)]
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -tr nnUNetTrainerMRCT_compound_loss -f FOLD \[optional: -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)\]
 ```
 
 ### Evaluation
