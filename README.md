@@ -37,6 +37,9 @@ For both `nnUNet_mri2ct` and `U-Mamba_mri2ct`, the *raw data* can be prepared us
 python prepare_nnunet_raw_data.py
 ```
 
+> [!IMPORTANT]
+> Our MRI-to-CT translation pipeline uses a compound loss taht requires the pre-trained weights from [TotalSegmentator](https://github.com/wasserth/TotalSegmentator). Please follow the instructions in [TotalSegmentator Setup Guide](./TotalSegmentator_Dataset297_Pretrained/README.md) to download and place the `checkpoint_final.pth` file correctly before starting the training.
+
 ## SegMamba
 
 #### Docker Setup
@@ -113,7 +116,7 @@ nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres
 ```
 #### Training
 ```bash
-CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss \[optional: -pretrained_weights PATH_TO_CHECKPOINT\]
+CUDA_VISIBLE_DEVICES=0 nnUNetv2_train 100 3d_fullres FOLD -tr nnUNetTrainerMRCT_compound_loss \[optional: -pretrained_weights PATH_TO_CHECKPOINT\]
 ```
 #### Inference
 ```bash
@@ -121,7 +124,7 @@ CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres 
 ```
 
 ## Evaluation
-Once training and inference are completed, set up the paths for ground truth and synthetic data and run the following scripts:
+Once training and inference are completed, set up the **paths** for *ground truth* and *synthetic data* and run the following scripts:
 ```bash
 python compute_image_similarity_metrics.py
 python compute_segmentation_metrics.py
