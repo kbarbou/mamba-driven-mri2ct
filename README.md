@@ -10,6 +10,10 @@ We provide a unified framework for training and evaluating several models that h
 - U-Net
 - SwinUNETR
 
+If you find this work or code useful for your research, please cite our paper:
+```text
+Barmpounakis, K., Vagenas, T.P., Vakalopoulou, M., Matsopoulos, G.K.: Mamba-driven MRI-to-CT Synthesis for MRI-only Radiotherapy Planning. arXiv preprint arXiv:2603.23295 (2026).
+```
 ## Data Preparation
 
 The data used in this study are derived from the training set of **Task 1** of the [SynthRAD2025](https://synthrad2025.grand-challenge.org/) challenge and can be downloaded from [Zenodo](https://zenodo.org/records/15373853).
@@ -27,12 +31,12 @@ pip install -r requirements.txt --no-cache-dir
 After setting up the environment, run the following commands:
 ```bash
 cd mamba-driven-mri2ct/
-python data_preparation.py
-python convert_mha_to_nifti.py
+python ./scripts/data_preparation.py
+python ./scripts/convert_mha_to_nifti.py
 ```
 For both `nnUNet_mri2ct` and `U-Mamba_mri2ct`, the *raw data* can be prepared using the same script. Please, ensure that **input data paths** are correctly configured inside the script and run:
 ```bash
-python prepare_nnunet_raw_data.py
+python ./scripts/prepare_nnunet_raw_data.py
 ```
 
 > [!IMPORTANT]
@@ -124,8 +128,8 @@ CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres 
 ## Evaluation
 Once training and inference are completed, set up the **paths** for *ground truth* and *synthetic data* and run the following scripts:
 ```bash
-python compute_image_similarity_metrics.py
-python compute_segmentation_metrics.py
+python ./scripts/compute_image_similarity_metrics.py
+python ./scripts/compute_segmentation_metrics.py
 ```
 
 ## Acknowledgements
@@ -141,12 +145,7 @@ We also thank the organizers of the [SynthRAD2025](https://synthrad2025.grand-ch
 The authors gratefully acknowledge **NVIDIA Corporation** for the GPU hardware grant that facilitated the conducted computational experiments.
 
 ## Citations
-If you find this work or code useful for your research, please cite our paper:
-```text
-Barmpounakis, K., Vagenas, T.P., Vakalopoulou, M., Matsopoulos, G.K.: Mamba-driven MRI-to-CT Synthesis for MRI-only Radiotherapy Planning. arXiv preprint arXiv:2603.23295 (2026).
-```
-
-Please also consider citing the following foundational works and repositories that were essential to this project.
+Please consider citing the following foundational works and repositories that were essential to this project.
 #### SegMamba
 ```text
 Xing, Z., Ye, T., Yang, Y., Liu, G., Zhu, L.: SegMamba: Long-range sequential modeling Mamba for 3D medical image segmentation. In: Medical Image Computing and Computer Assisted Intervention – MICCAI 2024, LNCS, vol. 15008, pp. 578–588. Springer Nature Switzerland (2024).
