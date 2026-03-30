@@ -72,7 +72,7 @@ torch==2.7.0
 torchinfo==1.8.0
 torchmetrics==1.7.2
 torchvision==0.22.0
-TotalSegmentator
+totalsegmentator
 tqdm==4.67.1
 traceback2==1.4.0
 triton==3.3.0
