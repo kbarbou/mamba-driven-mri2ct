@@ -165,3 +165,8 @@ synthRAD/
 raw_data/
 logs/
 results/
+
+# Checkpoints
+checkpoint_final.pth
+*.zip
+*.tar.gz
