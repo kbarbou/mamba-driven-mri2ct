@@ -26,6 +26,6 @@ TotalSegmentator_Dataset297_Pretrained/
 This work makes use of the pretrained models and resources provided by [TotalSegmentator](https://github.com/wasserth/totalsegmentator).
 
 If you use this model, please also cite:
-```bash
+```text
 Wasserthal, J., Breit, H.-C., Meyer, M.T., Pradella, M., Hinck, D., Sauter, A.W., Heye, T., Boll, D., Cyriac, J., Yang, S., Bach, M., Segeroth, M., 2023. TotalSegmentator: Robust Segmentation of 104 Anatomic Structures in CT Images. Radiology: Artificial Intelligence. https://doi.org/10.1148/ryai.230024
 ```
