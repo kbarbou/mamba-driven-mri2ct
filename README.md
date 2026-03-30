@@ -10,6 +10,7 @@ We provide a unified framework for training and evaluating several models that h
 - U-Net
 - SwinUNETR
 
+If you encounter any issues with the code, environment setup, or have questions regarding the methodology, please feel free to contact `kbarbounakis@biomed.ntua.gr`.
 
 ## Data Preparation
 
@@ -45,7 +46,7 @@ cd SegMamba_mri2ct/
 docker build -t segmamba:11.8.0-base-ubuntu22.04 .
 ```
 
-Verify the docker installation
+Verify the docker installation:
 ```bash
 docker run --rm --gpus '"device=0"' segmamba:11.8.0-base-ubuntu22.04 python 0_dummy_inference.py
 ```
@@ -57,7 +58,7 @@ python 1_prepare_raw_data.py --paths_dir /path/to/Paths_and_Sizes --out_base /pa
 python 2_preprocessing.py --base_dir /path/to/raw_data --output_dir /path/to/preprocessed/data
 ```
 
-Specify model type and run the following command:
+Specify the model type **{segmamba, unet, swinunetr}** and ensure all paths are correctly set before training and inference:
 #### Training
 ```bash
 docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace /path/to/mamba-driven-mri2ct/TotalSegmentator_Dataset297_Pretrained/checkpoint_final.pth:/workspace/checkpoint_final.pth segmamba:11.8.0-base-ubuntu22.04 python /workspace/3_train.py --model_type segmamba --data_dir /workspace/raw_data/fullres/train --model_save_path /workspace/logs/segmamba
@@ -75,7 +76,7 @@ cd U-Mamba_mri2ct/
 docker build -t umamba:11.8.0-base-ubuntu22.04 .
 ```
 
-Verify the docker installation
+Verify the docker installation:
 ```bash
 docker run --rm --gpus '"device=0"' umamba:11.8.0-base-ubuntu22.04 python test_umamba.py
 ```
@@ -100,7 +101,7 @@ conda activate nnUNet_mri2ct
 cd nnUNet_mri2ct/
 pip install -e .
 cd ./nnunetv2/training/loss
-ln -s /data/kbarbounakis/SegMamba_2/checkpoint_final.pth checkpoint_final.pth
+ln -s ../../../../../TotalSegmentator_Dataset297_Pretrained/checkpoint_final.pth checkpoint_final.pth
 export nnUNet_raw="set/path/to/data/nnUNet/raw"
 export nnUNet_preprocessed="set/path/to/data/nnUNet/preprocessed"
 export nnUNet_results="set/path/to/data/nnUNet/results"
@@ -119,7 +120,7 @@ CUDA_VISIBLE_DEVICES=0 nnUNetv2_train DatasetY 3d_fullres FOLD -tr nnUNetTrainer
 CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -tr nnUNetTrainerMRCT_compound_loss -f FOLD \[optional: -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)\]
 ```
 
-### Evaluation
+## Evaluation
 Once training and inference are completed, set up the paths for ground truth and synthetic data and run the following scripts:
 ```bash
 python compute_image_similarity_metrics.py
@@ -137,3 +138,28 @@ This work builds upon several open-source projects. We express our appreciation 
 We also thank the organizers of the [SynthRAD2025](https://synthrad2025.grand-challenge.org/) for making their dataset available to the research community. In addition, we would like to thank the developers of [nnU-Net](https://github.com/MIC-DKFZ/nnUNet), [Mamba](https://github.com/state-spaces/mamba), and [MONAI](https://github.com/Project-MONAI/MONAI), which were essential for this work.
 
 The authors gratefully acknowledge NVIDIA Corporation for the GPU hardware grant that facilitated the conducted computational experiments.
+
+## Citations
+If you find this work or code useful for your research, please cite our paper:
+```bash
+Barmpounakis, K., Vagenas, T.P., Vakalopoulou, M., Matsopoulos, G.K.: Mamba-driven MRI-to-CT Synthesis for MRI-only Radiotherapy Planning. arXiv preprint arXiv:2603.23295 (2026).
+```
+
+Please also consider citing the following foundational works and repositories that were essential to this project.
+#### SegMamba
+```bash
+Xing, Z., Ye, T., Yang, Y., Liu, G., Zhu, L.: SegMamba: Long-range sequential modeling Mamba for 3D medical image segmentation. In: Medical Image Computing and Computer Assisted Intervention – MICCAI 2024, LNCS, vol. 15008, pp. 578–588. Springer Nature Switzerland (2024).
+```
+#### U-Mamba
+```bash
+Ma, J., Li, F., Wang, B.: U-Mamba: Enhancing Long-range Dependency for Biomedical Image Segmentation. arXiv preprint arXiv:2401.04722 (2024).
+```
+#### nnUNet
+```bash
+Longuefosse, A., Bot, E. L., De Senneville, B. D., Giraud, R., Mansencal, B., Coupé, P., ... & Baldacci, F. (2024, October). Adapted nnU-Net: A Robust Baseline for Cross-Modality Synthesis and Medical Image Inpainting. In International Workshop on Simulation and Synthesis in Medical Imaging (pp. 24-33). Cham: Springer Nature Switzerland.
+```
+```bash
+Isensee, F., Jaeger, P. F., Kohl, S. A., Petersen, J., & Maier-Hein, K. H. (2021). nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nature methods, 18(2), 203-211.
+```
+
+
