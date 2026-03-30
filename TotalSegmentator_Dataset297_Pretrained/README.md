@@ -27,8 +27,5 @@ This work makes use of the pretrained models and resources provided by [TotalSeg
 
 If you use this model, please also cite:
 ```bash
-Wasserthal, J., Breit, H. C., Meyer, M. T., Pradella, M., Hinck, D., Sauter, A. W., Heye, T., Boll, D. T., Cyriac, J., Yang, S., Bach, M., & Segeroth, M. (2023).  
-*TotalSegmentator: Robust segmentation of 104 anatomical structures in CT images.*  
-Nature Communications, 14, 1545.  
-https://doi.org/10.1038/s41467-023-36256-3
+Wasserthal, J., Breit, H.-C., Meyer, M.T., Pradella, M., Hinck, D., Sauter, A.W., Heye, T., Boll, D., Cyriac, J., Yang, S., Bach, M., Segeroth, M., 2023. TotalSegmentator: Robust Segmentation of 104 Anatomic Structures in CT Images. Radiology: Artificial Intelligence. https://doi.org/10.1148/ryai.230024
 ```
