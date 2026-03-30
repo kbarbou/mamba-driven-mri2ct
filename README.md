@@ -141,24 +141,24 @@ The authors gratefully acknowledge NVIDIA Corporation for the GPU hardware grant
 
 ## Citations
 If you find this work or code useful for your research, please cite our paper:
-```bash
+```text
 Barmpounakis, K., Vagenas, T.P., Vakalopoulou, M., Matsopoulos, G.K.: Mamba-driven MRI-to-CT Synthesis for MRI-only Radiotherapy Planning. arXiv preprint arXiv:2603.23295 (2026).
 ```
 
 Please also consider citing the following foundational works and repositories that were essential to this project.
 #### SegMamba
-```bash
+```text
 Xing, Z., Ye, T., Yang, Y., Liu, G., Zhu, L.: SegMamba: Long-range sequential modeling Mamba for 3D medical image segmentation. In: Medical Image Computing and Computer Assisted Intervention – MICCAI 2024, LNCS, vol. 15008, pp. 578–588. Springer Nature Switzerland (2024).
 ```
 #### U-Mamba
-```bash
+```text
 Ma, J., Li, F., Wang, B.: U-Mamba: Enhancing Long-range Dependency for Biomedical Image Segmentation. arXiv preprint arXiv:2401.04722 (2024).
 ```
 #### nnUNet
-```bash
+```text
 Longuefosse, A., Bot, E. L., De Senneville, B. D., Giraud, R., Mansencal, B., Coupé, P., ... & Baldacci, F. (2024, October). Adapted nnU-Net: A Robust Baseline for Cross-Modality Synthesis and Medical Image Inpainting. In International Workshop on Simulation and Synthesis in Medical Imaging (pp. 24-33). Cham: Springer Nature Switzerland.
 ```
-```bash
+```text
 Isensee, F., Jaeger, P. F., Kohl, S. A., Petersen, J., & Maier-Hein, K. H. (2021). nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nature methods, 18(2), 203-211.
 ```
 
