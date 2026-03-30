@@ -1,6 +1,6 @@
 # Mamba-driven MRI-to-CT Synthesis for MRI-only Radiotherapy Planning
 
-The goal of this work is to investigate MRI-to-CT image-to-image translation using multiple deep learning models, with a focus on Mamba-based architectures.
+The goal of this [work](https://arxiv.org/abs/2603.23295) is to investigate MRI-to-CT image-to-image translation using multiple deep learning models, with a focus on Mamba-based architectures.
 
 We provide a unified framework for training and evaluating several models that have been adapted for MRI-to-CT translation, including:
 
@@ -9,8 +9,6 @@ We provide a unified framework for training and evaluating several models that h
 - nnU-Net
 - U-Net
 - SwinUNETR
-
-If you encounter any issues with the code, environment setup, or have questions regarding the methodology, please feel free to contact `kbarbounakis@biomed.ntua.gr`.
 
 ## Data Preparation
 
@@ -140,7 +138,7 @@ This work builds upon several open-source projects. We express our appreciation 
 
 We also thank the organizers of the [SynthRAD2025](https://synthrad2025.grand-challenge.org/) for making their dataset available to the research community. In addition, we would like to thank the developers of [nnU-Net](https://github.com/MIC-DKFZ/nnUNet), [Mamba](https://github.com/state-spaces/mamba), and [MONAI](https://github.com/Project-MONAI/MONAI), which were essential for this work.
 
-The authors gratefully acknowledge NVIDIA Corporation for the GPU hardware grant that facilitated the conducted computational experiments.
+The authors gratefully acknowledge **NVIDIA Corporation** for the GPU hardware grant that facilitated the conducted computational experiments.
 
 ## Citations
 If you find this work or code useful for your research, please cite our paper:
@@ -165,4 +163,5 @@ Longuefosse, A., Bot, E. L., De Senneville, B. D., Giraud, R., Mansencal, B., Co
 Isensee, F., Jaeger, P. F., Kohl, S. A., Petersen, J., & Maier-Hein, K. H. (2021). nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nature methods, 18(2), 203-211.
 ```
 
-
+> [!NOTE] 
+> If you encounter any issues with the code, environment setup, or have questions regarding the methodology, please feel free to contact `kbarbounakis@biomed.ntua.gr`.
