@@ -4,7 +4,7 @@ The goal of this [work](https://arxiv.org/abs/2603.23295) is to investigate MRI-
 
 We provide a unified framework for training and evaluating several models that have been adapted for MRI-to-CT translation, including:
 
-- U-Mamba
+- FlexMamba
 - SegMamba
 - nnU-Net
 - U-Net
@@ -34,7 +34,7 @@ cd mamba-driven-mri2ct/
 python ./scripts/data_preparation.py
 python ./scripts/convert_mha_to_nifti.py
 ```
-For both `nnUNet_mri2ct` and `U-Mamba_mri2ct`, the *raw data* can be prepared using the same script. Please, ensure that **input data paths** are correctly configured inside the script and run:
+Concerning `nnUNet_mri2ct`, the *raw data* can be prepared using the following script. Please, ensure that **input data paths** are correctly configured inside the script and run:
 ```bash
 python ./scripts/prepare_nnunet_raw_data.py
 ```
@@ -42,7 +42,7 @@ python ./scripts/prepare_nnunet_raw_data.py
 > [!IMPORTANT]
 > Our MRI-to-CT translation pipeline uses a compound loss taht requires the pre-trained weights from [TotalSegmentator](https://github.com/wasserth/TotalSegmentator). Please follow the instructions in [TotalSegmentator Setup Guide](./TotalSegmentator_Dataset297_Pretrained/README.md) to download and place the `checkpoint_final.pth` file correctly before starting the training.
 
-## SegMamba
+## FlexMamba & SegMamba 
 
 #### Docker Setup
 We recommend running training and inference for the `SegMamba_mri2ct` framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine. 
@@ -63,40 +63,15 @@ python 1_prepare_raw_data.py --paths_dir /path/to/Paths_and_Sizes --out_base /pa
 python 2_preprocessing.py --base_dir /path/to/raw_data --output_dir /path/to/preprocessed/data
 ```
 
-Specify the model type **{segmamba, unet, swinunetr}** and ensure all paths are correctly set before training and inference:
+Specify the model type **{flexmamba, segmamba, unet, swinunetr}** and ensure all paths are correctly set before training and inference:
 #### Training
 ```bash
-docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace /path/to/mamba-driven-mri2ct/TotalSegmentator_Dataset297_Pretrained/checkpoint_final.pth:/workspace/checkpoint_final.pth segmamba:11.8.0-base-ubuntu22.04 python /workspace/3_train.py --model_type segmamba --data_dir /workspace/raw_data/fullres/train --model_save_path /workspace/logs/segmamba
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace /path/to/mamba-driven-mri2ct/TotalSegmentator_Dataset297_Pretrained/checkpoint_final.pth:/workspace/checkpoint_final.pth segmamba:11.8.0-base-ubuntu22.04 python /workspace/3_train.py --model_type flexmamba --data_dir /workspace/raw_data/fullres/train --model_save_path /workspace/logs/flexmamba
 ```
 
 #### Inference
 ```bash
-docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace segmamba:11.8.0-base-ubuntu22.04 python /workspace/4_predict.py --model_type segmamba --model_path /workspace/logs/segmamba/checkpoint_ep499.pt --input_dir /workspace/raw_data/fullres/test --output_dir /workspace/results/synthRAD2025
-```
-
-## U-Mamba
-We recommend running training and inference for the `U-Mamba_mri2ct` framework inside dedicated Docker container. To enable GPU acceleration inside Docker, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed on your host machine.
-```bash
-cd U-Mamba_mri2ct/
-docker build -t umamba:11.8.0-base-ubuntu22.04 .
-```
-
-Verify the docker installation:
-```bash
-docker run --rm --gpus '"device=0"' umamba:11.8.0-base-ubuntu22.04 python test_umamba.py
-```
-
-#### Preprocessing
-```bash
-docker run --rm --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_plan_and_preprocess -d 100 -c 3d_fullres'
-```
-#### Training
-```bash
-docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba -v /path/to/mamba-driven-mri2ct/TotalSegmentator_Dataset297_Pretrained/checkpoint_final.pth:/workspace/U-Mamba/umamba/nnunetv2/training/loss/checkpoint_final.pth umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_train 100 3d_fullres FOLD -tr nnUNetTrainerUMambaEncNoAMP'
-```
-#### Inference
-```bash
-docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/U-Mamba_mri2ct:/workspace/U-Mamba umamba:11.8.0-base-ubuntu22.04 bash -c 'nnUNetv2_predict -d 100 -i /workspace/U-Mamba/data/nnUNet_raw/[DATASET_NAME]/imagesTs -o /workspace/U-Mamba/[OUTPUT_DIR_NAME] -c 3d_fullres -tr nnUNetTrainerUMambaEncNoAMP -f FOLD -chk checkpoint_latest.pth'
+docker run --rm --gpus '"device=0"' --shm-size=64g -v /path/to/mamba-driven-mri2ct/SegMamba_mri2ct:/workspace segmamba:11.8.0-base-ubuntu22.04 python /workspace/4_predict.py --model_type flexmamba --model_path /workspace/logs/flexmamba/checkpoint_ep1499.pt --input_dir /workspace/raw_data/fullres/test --output_dir /workspace/results/synthRAD2025
 ```
 
 ## nnUNet
@@ -124,6 +99,10 @@ CUDA_VISIBLE_DEVICES=0 nnUNetv2_train 100 3d_fullres FOLD -tr nnUNetTrainerMRCT_
 ```bash
 CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres -tr nnUNetTrainerMRCT_compound_loss -f FOLD \[optional: -chk checkpoint_best.pth -step_size 0.3 --rec (mean,median)\]
 ```
+#### Post-processing
+```bash
+python ./scripts/postprocess_nnunet_inferences.py --input-dir OUTPUT --output-dir POSTPRCESSSED_OUTPUT 
+```
 
 ## Evaluation
 Once training and inference are completed, set up the **paths** for *ground truth* and *synthetic data* and run the following scripts:
@@ -136,7 +115,6 @@ python ./scripts/compute_segmentation_metrics.py
 This work builds upon several open-source projects. We express our appreciation to the authors of the following repositories:
 
 - SegMamba — https://github.com/ge-xing/SegMamba
-- U-Mamba — https://github.com/bowang-lab/U-Mamba
 - nnU-Net_translation — https://github.com/Phyrise/nnUNet_translation
 - SynthRAD2025 Evaluation metrics — https://github.com/SynthRAD2025/metrics
 
@@ -149,10 +127,6 @@ Please consider citing the following foundational works and repositories that we
 #### SegMamba
 ```text
 Xing, Z., Ye, T., Yang, Y., Liu, G., Zhu, L.: SegMamba: Long-range sequential modeling Mamba for 3D medical image segmentation. In: Medical Image Computing and Computer Assisted Intervention – MICCAI 2024, LNCS, vol. 15008, pp. 578–588. Springer Nature Switzerland (2024).
-```
-#### U-Mamba
-```text
-Ma, J., Li, F., Wang, B.: U-Mamba: Enhancing Long-range Dependency for Biomedical Image Segmentation. arXiv preprint arXiv:2401.04722 (2024).
 ```
 #### nnUNet
 ```text
