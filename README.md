@@ -101,7 +101,7 @@ CUDA_VISIBLE_DEVICES=0 nnUNetv2_predict -d 100 -i INPUT -o OUTPUT -c 3d_fullres 
 ```
 #### Post-processing
 ```bash
-python ./scripts/postprocess_nnunet_inferences.py --input-dir OUTPUT --output-dir POSTPRCESSSED_OUTPUT 
+python ./scripts/postprocess_nnunet_inferences.py --input-dir OUTPUT --output-dir POSTPROCESSSED_OUTPUT 
 ```
 
 ## Evaluation
