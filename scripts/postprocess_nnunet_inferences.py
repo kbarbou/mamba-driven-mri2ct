@@ -24,20 +24,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--input-dir",
         type=Path,
-        default=Path("/data/kbarbounakis/nnunet_exp/nnUNet_inferences"),
+        default=Path("/path/to/output_data"),
         help="Directory containing nnUNet inference volumes",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("/data/kbarbounakis/nnunet_exp/nnUNet_inferences/nnUNet_postprocessed"),
+        default=Path("/path/to/postprocessed_output_data"),
         help="Directory where post-processed volumes will be written",
     )
     parser.add_argument(
         "--verified-list",
         type=Path,
-        default=Path("/data/kbarbounakis/verified_matches.txt"),
-        help="Text file listing case IDs that should be copied unchanged",
+        #if needed
+        default=Path("path/to/already_postprocessed_cases/verified_matches.txt"),
+        help="Text file listing case IDs that should be copied unchanged from the current output dir to the postprocessed one",
     )
     return parser.parse_args()
 
