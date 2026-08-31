@@ -122,7 +122,7 @@ class DataLoaderMultiProcess:
                 data_all[idx] = np.pad(data_patch, ((0, 0), *padding), 'constant', constant_values=0)
                 #seg_all[idx] = np.pad(seg_patch, ((0, 0), *padding), 'constant', constant_values=0)
                 #data_all[idx] = np.pad(data_patch, ((0, 0), *padding), 'constant', constant_values=min_data_value)
-                seg_all[idx] = np.pad(seg_patch, ((0, 0), *padding), 'constant', constant_values=-2.0)
+                seg_all[idx] = np.pad(seg_patch, ((0, 0), *padding), 'constant', constant_values=-1.0)
 
                 if data_global is not None:
                     data_all_global[idx] = data_global

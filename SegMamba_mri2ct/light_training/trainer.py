@@ -359,6 +359,15 @@ class Trainer:
         
         self.max_steps = self.max_epochs * len(self.train_loader)
 
+        # If resuming, restore global_step to reflect progress so logging/steps continue
+        if self.resume_epoch and self.resume_epoch > 0:
+            # self.num_step_per_epoch should have been set earlier when creating the loader
+            try:
+                self.global_step = int(self.resume_epoch * self.num_step_per_epoch)
+                print(f"[RESUME] global_step restored to {self.global_step}")
+            except Exception:
+                print("[RESUME] Could not restore global_step (num_step_per_epoch unknown).")
+
         print(f"Max step number is {self.max_steps}")
 
         if self.scheduler_type == "cosine_with_warmup":

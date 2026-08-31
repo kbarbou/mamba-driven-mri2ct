@@ -262,24 +262,27 @@ class DefaultPreprocessor(object):
                     remaining = [i for i in remaining if i not in done]
                     sleep(0.1)
 
-    def modify_seg_fn(self, seg: np.ndarray, properties: dict, scaling="z_score") -> np.ndarray:
+    def modify_seg_fn(self, seg: np.ndarray, properties: dict, scaling="division") -> np.ndarray:
         # this function will be called at the end of self.run_case. Can be used to change the segmentation
         # after resampling. Useful for experimenting with sparse annotations: I can introduce sparsity after resampling
         # and don't have to create a new dataset each time I modify my experiments
         if seg is None:
             return seg
 
-        seg = np.clip(seg, -1024, 1500)
+        seg = np.clip(seg, -1024, 3000)
         seg = seg.astype(np.float32)
         
         
         if scaling == "min_max":
             # Scale to [0, 1]
-            seg = (seg + 1024.0) / (1500.0 + 1024.0)
+            seg = (seg + 1024.0) / (3000.0 + 1024.0)
             print(f"Clipping and {scaling} Scaling has been applied")
         elif scaling == "z_score":
             # Z-score (dataset-level) mean = -219.1395, std = 414.3167
             seg = (seg + 219.1395) / 414.3167
+            print(f"Clipping and {scaling} Scaling has been applied")
+        elif scaling == "division":
+            seg = seg / 1000.0
             print(f"Clipping and {scaling} Scaling has been applied")
         else:
             print("[WARNING] CT data have been clipped but no scaling has been applied to CT data")

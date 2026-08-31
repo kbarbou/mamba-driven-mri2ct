@@ -93,20 +93,24 @@ class GSC(nn.Module):
         super().__init__()
 
         self.proj = nn.Conv3d(in_channles, in_channles, 3, 1, 1)
-        self.norm = nn.InstanceNorm3d(in_channles)
-        self.nonliner = nn.ReLU()
+        self.norm = LayerNorm(in_channles, data_format="channels_first")
+        self.nonliner = nn.LeakyReLU(0.1)
+        #self.nonliner = nn.ReLU()
 
         self.proj2 = nn.Conv3d(in_channles, in_channles, 3, 1, 1)
-        self.norm2 = nn.InstanceNorm3d(in_channles)
-        self.nonliner2 = nn.ReLU()
+        self.norm2 = LayerNorm(in_channles, data_format="channels_first")
+        self.nonliner2 = nn.LeakyReLU(0.1)
+        #self.nonliner2 = nn.ReLU()
 
         self.proj3 = nn.Conv3d(in_channles, in_channles, 1, 1, 0)
-        self.norm3 = nn.InstanceNorm3d(in_channles)
-        self.nonliner3 = nn.ReLU()
+        self.norm3 = LayerNorm(in_channles, data_format="channels_first")
+        self.nonliner3 = nn.LeakyReLU(0.1)
+        #self.nonliner3 = nn.ReLU()
 
         self.proj4 = nn.Conv3d(in_channles, in_channles, 1, 1, 0)
-        self.norm4 = nn.InstanceNorm3d(in_channles)
-        self.nonliner4 = nn.ReLU()
+        self.norm4 = LayerNorm(in_channles, data_format="channels_first")
+        self.nonliner4 = nn.LeakyReLU(0.1)
+        #self.nonliner4 = nn.ReLU()
 
     def forward(self, x):
 
@@ -139,14 +143,13 @@ class MambaEncoder(nn.Module):
         assert len(depths) == len(dims)
         self.downsample_layers = nn.ModuleList() # stem and 3 intermediate downsampling conv layers
         stem = nn.Sequential(
-              nn.Conv3d(in_chans, dims[0], kernel_size=(3,7,7), stride=(1,2,2), padding=(1,3,3)),
-              #nn.Conv3d(in_chans, dims[0], kernel_size=7, stride=2, padding=3),
+              #nn.Conv3d(in_chans, dims[0], kernel_size=(3,7,7), stride=(1,2,2), padding=(1,3,3)),
+              nn.Conv3d(in_chans, dims[0], kernel_size=7, stride=2, padding=3),
               )
         self.downsample_layers.append(stem)
         for i in range(self.num_stages-1):
             downsample_layer = nn.Sequential(
-                # LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
-                nn.InstanceNorm3d(dims[i]),
+                LayerNorm(dims[i], data_format="channels_first"),
                 nn.Conv3d(dims[i], dims[i+1], kernel_size=2, stride=2),
             )
             self.downsample_layers.append(downsample_layer)
@@ -165,13 +168,13 @@ class MambaEncoder(nn.Module):
             self.stages.append(stage)
             self.gscs.append(gsc)
             cur += depths[i]
-            num_slices //= 2 # Halve slices as spatial dim decreases
+            num_slices = max(num_slices // 2, 1) # Halve slices as spatial dim decreases
 
         self.out_indices = out_indices
 
         self.mlps = nn.ModuleList()
         for i_layer in range(self.num_stages):
-            layer = nn.InstanceNorm3d(dims[i_layer])
+            layer = LayerNorm(dims[i_layer], data_format="channels_first")
             layer_name = f'norm{i_layer}'
             self.add_module(layer_name, layer)
             self.mlps.append(MlpChannel(dims[i_layer], 2 * dims[i_layer]))
@@ -200,12 +203,14 @@ class FlexibleMamba(nn.Module):
         self,
         in_chans=1,
         out_chans=13,
-        depths=[2, 2, 2, 2],
-        feat_size=[48, 96, 192, 384],
+        depths=[2, 2, 2, 2, 2],
+        feat_size=[48, 96, 192, 384, 768],
         drop_path_rate=0,
         layer_scale_init_value=1e-6,
         hidden_size: int = 768,
-        norm_name = "instance",
+        #norm_name = "instance",
+        #norm_name = "",
+        norm_name = ("group", {"num_groups": 8}),
         conv_block: bool = True,
         res_block: bool = True,
         spatial_dims=3,
@@ -257,7 +262,8 @@ class FlexibleMamba(nn.Module):
             in_channels=feat_sizes[1],
             out_channels=feat_sizes[0],
             kernel_size=3,
-            upsample_kernel_size=(1,2,2),  # match encoder stride
+            upsample_kernel_size=2,
+            #upsample_kernel_size=(1,2,2),
             norm_name=norm_name,
             res_block=res_block,
         )
@@ -279,7 +285,7 @@ class FlexibleMamba(nn.Module):
         x = x.view(new_view)
         x = x.permute(self.proj_axes).contiguous()
         return x
-
+    
     def forward(self, x_in):
         outs = self.vit(x_in)
         enc_skips = []
@@ -292,5 +298,4 @@ class FlexibleMamba(nn.Module):
         out = self.decoder_output(dec)
                 
         return self.out(out)
-        
     

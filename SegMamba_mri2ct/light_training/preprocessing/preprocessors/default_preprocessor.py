@@ -243,25 +243,10 @@ class DefaultPreprocessor(object):
             data[c] = normalizer.run(data[c])
         return data
     
-    def _normalize_ct(self, seg, scaling="z_score"):
-        # Clip Hounsfield Units to the range of interest
-        # -1024 is air/vacuum, 3071 covers most dense bone
-        #seg = np.clip(seg, -1024, 3071)
-        seg = np.clip(seg, -1024, 1500)
+    def _normalize_ct(self, seg):
         seg = seg.astype(np.float32)
-        
-        
-        if scaling == "min_max":
-            # Scale to [0, 1]
-            seg = (seg + 1024) / (3071 + 1024)
-            print(f"Clipping and {scaling} Scaling has been applied")
-        elif scaling == "z_score":
-            # Z-score (dataset-level) mean = -219.1395, std = 414.3167
-            seg = (seg + 219.1395) / 414.3167
-            print(f"Clipping and {scaling} Scaling has been applied")
-        else:
-            print("[WARNING] CT data have been clipped but no scaling has been applied to CT data")
-       
+        seg = seg / 1000.0
+        print("CT normalization applied: divided by 1000 (HU range ~[-1024,3000] -> ~[-1.024,3.0])")
         return seg
 
     # need to modify

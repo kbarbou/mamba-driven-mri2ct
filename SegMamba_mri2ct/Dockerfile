@@ -24,8 +24,10 @@ RUN apt-get update && apt-get install -y \
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Upgrade pip
-RUN pip install --upgrade pip setuptools wheel packaging numpy scipy scikit-learn einops ninja batchgenerators acvl_utils nibabel simpleitk
+RUN pip install --upgrade pip "setuptools<81" wheel packaging numpy scipy scikit-learn einops ninja batchgenerators acvl_utils nibabel simpleitk
 RUN pip install transformers==4.38.2
+RUN pip install wandb
+ENV PYTHONWARNINGS="ignore::FutureWarning"
 
 # =========================
 # Install PyTorch (CUDA 11.8)

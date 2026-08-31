@@ -22,7 +22,8 @@ from tqdm import tqdm
 from torch.utils.data import Dataset 
 import glob 
 from light_training.dataloading.utils import unpack_dataset
-import random 
+import random
+import re
 
 class MedicalDataset(Dataset):
     def __init__(self, datalist, test=False) -> None:
@@ -105,6 +106,130 @@ class MedicalDataset(Dataset):
 
     def __len__(self):
         return len(self.datalist)
+
+def _get_anatomical_region_from_path(path):
+    """
+    Extract anatomical region from filenames like:
+        1ABA087.npz -> AB
+        1HNA097.npz -> HN
+        1THA203.npz -> TH
+
+    Also safe for names like:
+        1ABA087_mask.npy -> AB
+        1HNA097_seg.npy  -> HN
+    """
+    basename = os.path.basename(path)
+    stem = os.path.splitext(basename)[0]
+    case_id = stem.split("_")[0].upper()
+
+    match = re.match(r"^\d*([A-Z]{2})", case_id)
+    if match is None:
+        return None
+
+    return match.group(1)
+
+
+def _filter_paths_by_anatomical_region(all_paths, anatomical_region="all"):
+    """
+    anatomical_region:
+        "all" or None -> keep everything
+        "AB"          -> keep only abdomen cases
+        "HN"          -> keep only head/neck cases
+        "TH"          -> keep only thorax cases
+    """
+    if anatomical_region is None:
+        return all_paths
+
+    anatomical_region = anatomical_region.upper()
+
+    if anatomical_region == "ALL":
+        return all_paths
+
+    valid_regions = {"AB", "HN", "TH"}
+    if anatomical_region not in valid_regions:
+        raise ValueError(
+            f"Invalid anatomical_region='{anatomical_region}'. "
+            f"Expected one of: all, AB, HN, TH."
+        )
+
+    filtered_paths = [
+        path for path in all_paths
+        if _get_anatomical_region_from_path(path) == anatomical_region
+    ]
+
+    return filtered_paths
+
+
+def get_train_val_test_loader_from_train(
+    data_dir,
+    train_rate=0.7,
+    val_rate=0.1,
+    test_rate=0.2,
+    seed=42,
+    anatomical_region="all",
+):
+    """
+    Load train/val/test datasets.
+
+    anatomical_region:
+        "all" -> default behavior, uses all cases
+        "AB"  -> use only AB cases, e.g. 1ABA..., 1ABB..., 1ABC...
+        "HN"  -> use only HN cases, e.g. 1HNA..., 1HNC..., 1HND...
+        "TH"  -> use only TH cases, e.g. 1THA..., 1THB...
+    """
+
+    all_paths = glob.glob(f"{data_dir}/*.npz")
+
+    # Optional ablation filtering
+    all_paths = _filter_paths_by_anatomical_region(
+        all_paths,
+        anatomical_region=anatomical_region,
+    )
+
+    train_number = int(len(all_paths) * train_rate)
+    val_number = int(len(all_paths) * val_rate)
+    test_number = int(len(all_paths) * test_rate)
+
+    random.seed(seed)
+    random.shuffle(all_paths)
+
+    train_datalist = all_paths[:train_number]
+    val_datalist = all_paths[train_number: train_number + val_number]
+
+    if test_number > 0:
+        test_datalist = all_paths[-test_number:]
+    else:
+        test_datalist = []
+
+    print(f"anatomical_region is {anatomical_region}")
+    print(f"total selected data is {len(all_paths)}")
+    print(f"training data is {len(train_datalist)}")
+    print(f"validation data is {len(val_datalist)}")
+    print(f"test data is {len(test_datalist)}", sorted(test_datalist))
+
+    if len(train_datalist) > 0:
+        train_ds = MedicalDataset(train_datalist)
+    else:
+        train_ds = None
+        print("Skipping training dataset creation since no training data provided.")
+
+    if len(val_datalist) > 0:
+        val_ds = MedicalDataset(val_datalist)
+    else:
+        val_ds = None
+        print("Skipping validation dataset creation since no validation data provided.")
+
+    if len(test_datalist) > 0:
+        test_ds = MedicalDataset(test_datalist)
+    else:
+        test_ds = None
+        print("Skipping test dataset creation since no test data provided.")
+
+    loader = [train_ds, val_ds, test_ds]
+
+    return loader
+
+
 
 def get_train_test_loader_from_test_list(data_dir, test_list):
     all_paths = glob.glob(f"{data_dir}/*.npz")
@@ -249,35 +374,6 @@ def get_train_val_test_loader_from_split_json(data_dir, split_json_file):
 
     return loader
 
-
-def get_train_val_test_loader_from_train(data_dir, train_rate=0.7, val_rate=0.1, test_rate=0.2, seed=42):
-    ## train all labeled data 
-    ## fold denote the validation data in training data
-    all_paths = glob.glob(f"{data_dir}/*.npz")
-    # fold_data = get_kfold_data(all_paths, 5)[fold]
-
-    train_number = int(len(all_paths) * train_rate)
-    val_number = int(len(all_paths) * val_rate)
-    test_number = int(len(all_paths) * test_rate)
-    random.seed(seed)
-    # random_state = random.random
-    random.shuffle(all_paths)
-
-    train_datalist = all_paths[:train_number]
-    val_datalist = all_paths[train_number: train_number + val_number]
-    test_datalist = all_paths[-test_number:] 
-
-    print(f"training data is {len(train_datalist)}")
-    print(f"validation data is {len(val_datalist)}")
-    print(f"test data is {len(test_datalist)}", sorted(test_datalist))
-
-    train_ds = MedicalDataset(train_datalist)
-    val_ds = MedicalDataset(val_datalist)
-    test_ds = MedicalDataset(test_datalist)
-
-    loader = [train_ds, val_ds, test_ds]
-
-    return loader
 
 def get_train_loader_from_train(data_dir):
     ## train all labeled data 

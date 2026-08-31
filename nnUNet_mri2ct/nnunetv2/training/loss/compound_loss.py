@@ -6,78 +6,52 @@ from dynamic_network_architectures.architectures.unet import PlainConvUNet
 import torch.nn.functional as F
 
 from monai.losses import SSIMLoss
+from monai.metrics import compute_ms_ssim
+
+# ── AFP perceptual loss ───────────────────────────────────────────────────────
+# TotalSeg117 (Dataset297, 3mm fast): isotropic PlainConvUNet.
+# Expected input: CTNormalization — clip HU to [−1004, 1588], then z-score.
+# Intensity stats come from the checkpoint's foreground_intensity_properties.
+AFP_SPACING      = (3.0, 3.0, 3.0)
+PATCH_SPACING    = (3.0, 1.0, 1.0)
+AFP_HU_CLIP_MIN  = -1004.0
+AFP_HU_CLIP_MAX  =  1588.0
+AFP_HU_MEAN      =   -50.387
+AFP_HU_STD       =   503.392
 
 class AFP(nn.Module):
-    def __init__(self, net: str = "", layers=[], normalize_before_L1=False):
+    def __init__(self, patch_spacing=PATCH_SPACING, afp_spacing=AFP_SPACING,
+                 layers=None, normalize_before_L1=False):
         super().__init__()
-        module_dir = os.path.dirname(os.path.abspath(__file__))
-        model_params = {
-            "TotalSeg117": { #patch_size : [128 128 128], 0.6mm, 117 labels kept
-                "weights_path": os.path.join(module_dir, "checkpoint_6mm_final.pth"),
-                "strides": [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]],
-                "kernels" : [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]],
-                "num_classes": 118,
-                "model_type": "PlainConvUNet_5"
-            },
-            "TotalSeg_ABHNTH_117labels": { #1*1*3mm, RIKEN
-                "weights_path": os.path.join(module_dir, "checkpoint_final.pth"),
-                "strides": [[1, 1, 1], [1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [1, 2, 2]],
-                "kernels" : [[1, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]],
-                "num_classes": 118,
-                "model_type": "PlainConvUNet"
-            },
-        }
-        params = model_params[net]
-        if params["model_type"] == "PlainConvUNet":
-            kernel = params.get("kernels", [[3, 3, 3]] * 6)
-            self.layers = layers if layers else [0, 1, 2, 3, 4, 5, 6, 7]
-            self.stages = 5
-            model = PlainConvUNet(
-                input_channels=1,
-                n_stages=5,
-                features_per_stage=[32, 64, 128, 256, 320],
-                conv_op=nn.Conv3d,
-                kernel_sizes=[[3, 3, 3]]*5,
-                strides=[[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]],
-                num_classes=118,
-                deep_supervision=False,
-                n_conv_per_stage=[2]*5,
-                n_conv_per_stage_decoder=[2]*4,
-                conv_bias=True,
-                norm_op=nn.InstanceNorm3d,
-                norm_op_kwargs={'eps': 1e-5, 'affine': True},
-                nonlin=nn.LeakyReLU,
-                nonlin_kwargs={'inplace': True}
-            )
-        elif params["model_type"] == "PlainConvUNet_5":
-            self.layers = layers if layers else [0, 1, 2, 3, 4, 5, 6]
-            kernel = [[3, 3, 3]] * 5
-            self.stages = 4
-            model = PlainConvUNet(input_channels=1, n_stages=5, features_per_stage=[32, 64, 128, 256, 320],
-                                conv_op=nn.Conv3d, kernel_sizes=kernel, strides=params["strides"],
-                                num_classes=params["num_classes"], deep_supervision=False, n_conv_per_stage=[2] * 5,
-                                n_conv_per_stage_decoder=[2] * 4, conv_bias=True, norm_op=nn.InstanceNorm3d,
-                                norm_op_kwargs={'eps': 1e-5, 'affine': True}, nonlin=nn.LeakyReLU,
-                                nonlin_kwargs={'inplace': True})
-        
-        if not os.path.exists(params["weights_path"]):
-            raise FileNotFoundError(f'Error: Checkpoint not found at {params["weights_path"]}')
-        checkpoint = torch.load(params["weights_path"], map_location='cuda', weights_only = False)
-        model_state_dict = checkpoint.get('state_dict', checkpoint.get('network_weights', checkpoint.get('model_state_dict')))
+        module_dir   = os.path.dirname(os.path.abspath(__file__))
+        weights_path = os.path.join(module_dir, "checkpoint_3mm_fast.pth")
+
+        self.layers = layers if layers is not None else [0, 1, 2, 3, 4, 5, 6]
+        self.stages = 4
+        model = PlainConvUNet(
+            input_channels=1, n_stages=5,
+            features_per_stage=[32, 64, 128, 256, 320],
+            conv_op=nn.Conv3d, kernel_sizes=[[3, 3, 3]] * 5,
+            strides=[[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]],
+            num_classes=118, deep_supervision=False,
+            n_conv_per_stage=[2] * 5, n_conv_per_stage_decoder=[2] * 4,
+            conv_bias=True, norm_op=nn.InstanceNorm3d,
+            norm_op_kwargs={"eps": 1e-5, "affine": True},
+            nonlin=nn.LeakyReLU, nonlin_kwargs={"inplace": True},
+        )
+
+        if not os.path.exists(weights_path):
+            raise FileNotFoundError(f"AFP checkpoint not found: {weights_path}")
+        checkpoint       = torch.load(weights_path, map_location="cuda", weights_only=False)
+        model_state_dict = checkpoint.get("state_dict", checkpoint.get("network_weights", checkpoint.get("model_state_dict")))
         model.load_state_dict(model_state_dict, strict=True)
-        print(f"AFP, layers {layers}, loaded {net} : {params['weights_path']}")
         model.eval()
-  
         for param in model.parameters():
             param.requires_grad = False
 
-        # Override forward to return intermediate feature maps (encoder skips + decoder features).
-        # The pip-installed decoder only returns the final segmentation output,
-        # but AFP needs per-layer features for perceptual loss computation.
-        # This replicates the custom UNetDecoder.forward from nnUNet_translation.
         def _forward_with_features(x):
-            skips = model.encoder(x)
-            decoder = model.decoder
+            skips      = model.encoder(x)
+            decoder    = model.decoder
             lres_input = skips[-1]
             all_feature_maps = []
             for s in range(len(decoder.stages)):
@@ -89,133 +63,113 @@ class AFP(nn.Module):
                     all_feature_maps.append(decoder.seg_layers[-1](x))
                 lres_input = x
             return skips[:-2] + all_feature_maps
+
         model.forward = _forward_with_features
+        self.model = model.to(device="cuda", dtype=torch.float16, non_blocking=True)
 
-        self.model = model
-        self.model = self.model.to(device='cuda', dtype=torch.float16) #arthur : needed for autocast ?
-
-        self.L1 = nn.L1Loss()
-        self.net = net
+        self.L1                      = nn.L1Loss()
+        self.patch_spacing           = patch_spacing
+        self.afp_spacing             = afp_spacing
+        self.scale_factors           = tuple(p / a for p, a in zip(patch_spacing, afp_spacing))
         self.print_perceptual_layers = False
-        self.print_loss = False
-        self.debug = False
-        self.normalize_before_L1 = normalize_before_L1
+        self.print_loss              = False
+        self.normalize_before_L1     = normalize_before_L1
 
     def center_pad_to_multiple_of_2pow(self, x):
+        _PAD_VALUE = -1.9
         factor = 2 ** self.stages
-        shape = x.shape[-3:]  
-        pad = []
-        for s in reversed(shape):  # reverse order for F.pad
-            new = ((s + factor - 1) // factor) * factor
+        pad    = []
+        for s in reversed(x.shape[-3:]):
+            new   = ((s + factor - 1) // factor) * factor
             total = new - s
             pad.extend([total // 2, total - total // 2])
-        return F.pad(x, pad, mode='constant', value=0)
-    
-    def get_last_layer(self):
-        return self.emb_x[-1], self.emb_y[-1]
+        return F.pad(x, pad, mode="constant", value=_PAD_VALUE)
 
-    def forward(self, x, y): 
-        """
-        todo : check if normalization of input tensors is needed
-        """
-        x = self.center_pad_to_multiple_of_2pow(x)
-        y = self.center_pad_to_multiple_of_2pow(y)
+    def _to_afp_space(self, x):
+        x_hu   = torch.clamp(x * 1000.0, AFP_HU_CLIP_MIN, AFP_HU_CLIP_MAX)
+        x_norm = (x_hu - AFP_HU_MEAN) / AFP_HU_STD
+        if any(abs(s - 1.0) > 1e-3 for s in self.scale_factors):
+            x_norm = F.interpolate(x_norm.float(), scale_factor=self.scale_factors,
+                                   mode="trilinear", align_corners=False)
+        return x_norm
 
-        emb_x = self.model(x)  
+    def forward(self, x, y):
+        x = self.center_pad_to_multiple_of_2pow(self._to_afp_space(x))
+        y = self.center_pad_to_multiple_of_2pow(self._to_afp_space(y))
+
+        # with torch.no_grad():
+        emb_x = self.model(x)
         emb_y = self.model(y)
-
         self.emb_x = emb_x
         self.emb_y = emb_y
 
-        AFP_loss = 0
-        layer_losses = []
+        AFP_loss = 0.0
         for i in self.layers:
             if self.normalize_before_L1:
                 emb_x[i] = F.instance_norm(emb_x[i])
                 emb_y[i] = F.instance_norm(emb_y[i])
             layer_loss = self.L1(emb_x[i], emb_y[i].detach())
-            AFP_loss += layer_loss
-            layer_losses.append((i, layer_loss.item()))
-
+            AFP_loss  += layer_loss
             if self.print_perceptual_layers:
                 print(f"Layer {i}, {emb_x[i].shape} | L1: {layer_loss.item():.4f}")
-
         if self.print_loss:
             print(f"AFP_total: {AFP_loss:.5f}")
         return AFP_loss
 
+
+# ── Compound loss ─────────────────────────────────────────────────────────────
 class compound_loss(nn.Module):
-    def __init__(self, net: str = "", w_afp=0.04, w_ssim=0.7, w_l1 = 1.0, w_bone_l1 = 1.0, z_score_mean = -219.1395, z_score_std = 414.3167, switch_to_compound_loss = 99):
+    def __init__(self, w_l1=1.0, w_afp=0.03, w_ms_ssim=0.4, w_psnr=0.0, ms_ssim_weights=(0.3, 0.3, 0.4)):
         super().__init__()
-        self.z_score_mean = z_score_mean
-        self.z_score_std = z_score_std
-
-        # Precompute z-score equivalents of the HU clip bounds and tissue thresholds
-        self.clip_min_z = (-1024.0 - z_score_mean) / z_score_std   # ≈ -1.94 σ
-        self.clip_max_z = (1500.0  - z_score_mean) / z_score_std   # ≈  4.15 σ
-        self.bone_z     = (300.0   - z_score_mean) / z_score_std   # ≈  1.25 σ
-        self.air_z      = (-700.0  - z_score_mean) / z_score_std   # ≈ -1.16 σ
-
-        # SSIM data_range in z-score space = (HU range) / std
-        data_range_z = self.clip_max_z - self.clip_min_z
-        self.ssim_loss = SSIMLoss(spatial_dims=3, data_range=data_range_z)
         self.l1_loss = nn.L1Loss()
-        self.afp = AFP(net="TotalSeg_ABHNTH_117labels", normalize_before_L1=True)
-        self.w_l1 = w_l1
-        self.w_bone_l1 = w_bone_l1
-        self.w_afp = w_afp
-        self.w_ssim = w_ssim
+        self.afp     = AFP()
+        self.w_l1    = w_l1
+        self.w_afp   = w_afp
+        self.w_ms_ssim = w_ms_ssim
+        self.w_psnr  = w_psnr
+        self.ms_ssim_weights = ms_ssim_weights
         self.counter = 0
-        self.switch_to_compound_loss = switch_to_compound_loss
-
-    def bone_weighted_l1(self, pred, target, w_bone=3.0, w_soft=1.5, w_air=0.5):
-        # Pred and target are in z-score space; thresholds are precomputed z-score equivalents of HU boundaries
-
-        target = torch.clip(target, self.clip_min_z, self.clip_max_z)
-        pred   = torch.clip(pred,   self.clip_min_z, self.clip_max_z)
-
-        bone_mask = (target > self.bone_z)
-        soft_mask = (target <= self.bone_z) & (target > self.air_z)
-        air_mask  = (target <= self.air_z)
-
-        weights = (
-            w_bone * bone_mask +
-            w_soft * soft_mask +
-            w_air  * air_mask
-        ).float()
-
-        l1 = torch.abs(pred - target)
-
-        weighted_l1 = torch.mean(weights * l1) / (weights.mean() + 1e-6)
-
-        return weighted_l1
 
     def forward(self, x, y, current_epoch=0):
-        # x and y are z-score preprocessed; all losses operate directly in z-score space
         l1 = self.l1_loss(x, y)
-        bone_l1 = self.bone_weighted_l1(x, y)
-        if current_epoch > self.switch_to_compound_loss:
-            ssim = self.ssim_loss(x, y)
-            with torch.amp.autocast('cuda'):
-                afp_loss = self.afp(x, y) 
-            loss = (
-                self.w_l1 * l1 +
-                self.w_bone_l1 * bone_l1 +
-                self.w_ssim * ssim + 
-                self.w_afp * afp_loss 
-            ) / 2.0
-            if (self.counter % 100 == 0):
-                print(f"[LOSS DEBUG] L1={l1.item():.4f}, "
-                    f"SSIM={ssim.item():.4f}, "
-                    f"AFP={afp_loss.item():.4f}, "
-                    f"Bone={bone_l1.item():.4f}")
-        else:
-            loss = (
-                self.w_l1 * l1 +
-                self.w_bone_l1 * bone_l1
-            )
-            if (self.counter % 100 == 0):
-                print(f"[LOSS DEBUG] L1={l1.item():.4f}, "
-                    f"Bone={bone_l1.item():.4f}")
-        self.counter += 1    
-        return loss    
+        data_range = (y.detach().max() - y.detach().min()).clamp(min=1e-6)
+        ms_ssim_val = compute_ms_ssim(
+            y_pred=x,
+            y=y,
+            spatial_dims=3,
+            data_range=data_range,
+            weights=self.ms_ssim_weights,
+        )
+        # Ensure ms_ssim_val is a scalar (compute_ms_ssim returns per-batch values)
+        if ms_ssim_val.numel() > 1:
+            ms_ssim_val = ms_ssim_val.mean()
+        ms_ssim_loss = 1.0 - ms_ssim_val
+
+        with torch.amp.autocast("cuda"):
+            afp_loss = self.afp(x, y)
+
+        loss = self.w_l1 * l1 + self.w_afp * afp_loss + self.w_ms_ssim * ms_ssim_loss
+
+        psnr_val = None
+        if self.w_psnr > 0.0:
+            mse        = F.mse_loss(x, y)
+            data_range = (y.detach().max() - y.detach().min()).clamp(min=1e-6)
+            psnr_val   = 10.0 * torch.log10((data_range ** 2) / mse.clamp(min=1e-8))
+            psnr_loss  = 1.0 / psnr_val.clamp(min=1e-6)
+            loss      += self.w_psnr * psnr_loss
+
+
+        self.last_components = {
+            "mae": l1.detach().item(),
+            "afp": afp_loss.detach().item(),
+            "ms_ssim": ms_ssim_val.detach().item(),
+            "ms_ssim_loss": ms_ssim_loss.detach().item(),
+            "compound_loss": loss.detach().item(),
+        }
+
+        if psnr_val is not None:
+            self.last_components["psnr"] = psnr_val.detach().item()    
+        if self.counter % 100 == 0:
+            print(f"[LOSS] L1={l1.item():.4f}  AFP={afp_loss.item():.4f}  MS-SSIM={ms_ssim_val.item():.4f}")
+        self.counter += 1
+        return loss

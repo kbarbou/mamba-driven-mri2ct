@@ -49,6 +49,8 @@ class ZScoreNormalization(ImageNormalization):
             image = (image - mean) / (max(std, 1e-8))
             print("Z score normalization: mean {}, std {} applied successfully on data".format(mean, std))
             print("New mean and std after normalization: {}, {}".format(image.mean(), image.std()))
+        image = np.clip(image, -5.0, 5.0)
+        print("Z score clipping applied: range clipped to [-5, 5], new min: {}, max: {}".format(image.min(), image.max()))
         return image
 
 

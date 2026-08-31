@@ -33,14 +33,22 @@ class nnUNetTrainerMRCT_compound_loss(nnUNetTrainer):
         self.enable_deep_supervision = False
         self.num_iterations_per_epoch = 250
         self.num_epochs = 1000 
-        self.batch_size = 1
-        self.compound_loss = compound_loss(net="TotalSeg_ABHNTH_117labels")
-        self.initial_lr = 1e-2
+        self.batch_size = 2
+        self.compound_loss = compound_loss()
+        self.grad_scaler = None
+        self.initial_lr = 1e-4
+        
 
     def _build_loss(self):
         loss = self.compound_loss
         return loss
 
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(self.network.parameters(), lr=1e-4, weight_decay=1e-5)
+        # nnU-Net uses a PolyLRScheduler by default, but Cosine is usually better for Adam
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.num_epochs)
+        print("Optimizer and LR scheduler configured: AdamW with CosineAnnealingLR")
+        return optimizer, lr_scheduler
     @staticmethod
     def get_training_transforms(patch_size: Union[np.ndarray, Tuple[int]],
                                 rotation_for_DA: dict,
